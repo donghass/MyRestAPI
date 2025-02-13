@@ -28,7 +28,7 @@ public class LectureResDto {
     private int basePrice;
     private int maxPrice;
     private int limitOfEnrollment;
-    private boolean offline;
-    private boolean free;
+    private boolean offline;    // 강의장이 있으면 오프라인 true 없으면 온라인 false
+    private boolean free;       // 프라이스가 있으면 false 없으면 true
     private String email;
 }

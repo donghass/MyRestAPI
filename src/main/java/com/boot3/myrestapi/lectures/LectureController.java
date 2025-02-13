@@ -21,6 +21,7 @@ public class LectureController {
 
         private final LectureRepository lectureRepository;
         private final ModelMapper modelMapper;
+        private final LectureValidator lectureValidator;
 
     //    // 생성자 주입 @RequiredArgsConstructor 사용하여 생략
     //    public LectureController(LectureRepository lectureRepository) {
@@ -32,13 +33,22 @@ public class LectureController {
      */
     @PostMapping
     public ResponseEntity<?> createLecture(@RequestBody @Valid LectureReqDto lectureReqDto, Errors errors) {
-        // 에러 발생 확인 에러 나면 종료
+        // 입력항목 검증시 에러 발생 확인 에러 나면 종료   // 입력 항목 값 에러 검증(어노테이션 확인)
         if(errors.hasErrors()) {
-            return ResponseEntity.badRequest().body(errors);
+            return getErrors(errors);
+        }
+
+        //비지니스로직 입력항목 검증 - lectureValidator 호출 / 입력 항목 계산하여 에러 검증
+        lectureValidator.validate(lectureReqDto,errors);
+        if(errors.hasErrors()) {
+            return getErrors(errors);
         }
 
         // ReqDTO => Entity 매핑
         Lecture lecture = modelMapper.map(lectureReqDto, Lecture.class);
+        // free, offline 값 업데이트
+        lecture.update();
+        
         // 테이블에 Insert
         Lecture addedLecture = this.lectureRepository.save(lecture);
         // Hateoas Link 생성을 담당하는 객체 http://localhost:8080/api/lectures/10   //getId = 위에 setId해준 10으로 requestMapping 의 /api/lectures/10
@@ -48,6 +58,10 @@ public class LectureController {
         // ResponseEntitiy = body + header + statusCode(ex. 200, 404 등등)
         // created() : statuscode 를 201로 설정하고, 위에서 생성한 링크를 response loacation 해더로 설정한다
         return ResponseEntity.created(createUri).body(lecture);
+    }
+
+    private static ResponseEntity<Errors> getErrors(Errors errors) {
+        return ResponseEntity.badRequest().body(errors);
     }
 
     @DeleteMapping("/{id}")

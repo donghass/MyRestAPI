@@ -14,14 +14,14 @@ public class ErrorsSerializer extends JsonSerializer<Errors>{
     @Override
     public void serialize(Errors errors, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         gen.writeStartArray(); // 직렬화 시작
-        errors.getFieldErrors().forEach(e -> {      // FieldErrors 객체 정보 직렬화
+        errors.getFieldErrors().forEach(a -> {      // FieldErrors 객체 정보 직렬화
             try {
                 gen.writeStartObject();
-                gen.writeStringField("field", e.getField());                            //필드명
-                gen.writeStringField("objectName", e.getObjectName());                  //필드가 포함된 DTO 객체명
-                gen.writeStringField("code", e.getCode());                              //검증규칙(어노테이션)
-                gen.writeStringField("defaultMessage", e.getDefaultMessage());          //에러메세지
-                Object rejectedValue = e.getRejectedValue();
+                gen.writeStringField("field", a.getField());                            //필드명
+                gen.writeStringField("objectName", a.getObjectName());                  //필드가 포함된 DTO 객체명
+                gen.writeStringField("code", a.getCode());                              //검증규칙(어노테이션)
+                gen.writeStringField("defaultMessage", a.getDefaultMessage());          //에러메세지
+                Object rejectedValue = a.getRejectedValue();
                 if (rejectedValue != null) {
                     gen.writeStringField("rejectedValue", rejectedValue.toString());    //잘못 입력된 값
                 }
