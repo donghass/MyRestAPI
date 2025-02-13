@@ -21,13 +21,9 @@ public class Lecture {
     @Column(nullable = false)
     private String name;
     private String description;
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private LocalDateTime beginEnrollmentDateTime;
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private LocalDateTime closeEnrollmentDateTime;
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private LocalDateTime beginLectureDateTime;
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private LocalDateTime endLectureDateTime;
     private String location;
     private int basePrice;
