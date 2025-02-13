@@ -1,5 +1,6 @@
 package com.boot3.myrestapi.lectures;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 @RestController
 @RequestMapping(value="/api/lectures", produces = MediaTypes.HAL_JSON_VALUE)
+// 롬복 생성자 자동 주입 // 생성자를 직접 구현하지 않고 final로 변수를 선언만 한다.
+@RequiredArgsConstructor
 public class LectureController {
     @PostMapping
     public ResponseEntity<?> createLecture(@RequestBody Lecture lecture) {
@@ -23,4 +26,11 @@ public class LectureController {
         // created() : statuscode 를 201로 설정하고, 위에서 생성한 링크를 response loacation 해더로 설정한다
         return ResponseEntity.created(createUri).body(lecture);
     }
+
+
+    private final LectureRepository lectureRepository;
+//    // 생성자 주입
+//    public LectureController(LectureRepository lectureRepository) {
+//        this.lectureRepository = lectureRepository;
+//    }
 }
