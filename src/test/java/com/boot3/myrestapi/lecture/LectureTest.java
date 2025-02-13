@@ -29,5 +29,5 @@ public void javaBean()
             (lecture.getName()).isEqualTo("Lecture"); //Then
         assertThat
             (lecture.getDescription()).isEqualTo("Spring");
-    }d
+    }
 }
