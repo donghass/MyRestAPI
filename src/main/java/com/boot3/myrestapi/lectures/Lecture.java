@@ -1,5 +1,6 @@
 package com.boot3.myrestapi.lectures;
 
+import com.boot3.myrestapi.security.userInfo.UserInfo;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,6 +37,9 @@ public class Lecture {
     // 숫자or문자열 설정 // string는 문자열 설정
     @Enumerated(EnumType.STRING)
     private LectureStatus lectureStatus = LectureStatus.DRAFT;
+
+    @ManyToOne  // Lecture 여러개를 User 1명이 수강 가능
+    private UserInfo userInfo;
 
     public void update() {
 // Update free
