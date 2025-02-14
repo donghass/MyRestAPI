@@ -26,14 +26,14 @@ import java.util.Optional;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 @RestController
-@RequestMapping(value="/api/lectures", produces = MediaTypes.HAL_JSON_VALUE)
+@RequestMapping(value = "/api/lectures", produces = MediaTypes.HAL_JSON_VALUE)
 // 롬복 생성자 자동 주입 // 생성자를 직접 구현하지 않고 final로 변수를 선언만 한다.
 @RequiredArgsConstructor
 public class LectureController {
 
-        private final LectureRepository lectureRepository;
-        private final ModelMapper modelMapper;
-        private final LectureValidator lectureValidator;
+    private final LectureRepository lectureRepository;
+    private final ModelMapper modelMapper;
+    private final LectureValidator lectureValidator;
 
     //    // 생성자 주입 @RequiredArgsConstructor 사용하여 생략
     //    public LectureController(LectureRepository lectureRepository) {
@@ -46,13 +46,13 @@ public class LectureController {
     @PostMapping
     public ResponseEntity<?> createLecture(@RequestBody @Valid LectureReqDto lectureReqDto, Errors errors) {
         // 입력항목 검증시 에러 발생 확인 에러 나면 종료   // 입력 항목 값 에러 검증(어노테이션 확인)
-        if(errors.hasErrors()) {
+        if (errors.hasErrors()) {
             return getErrors(errors);
         }
 
         //비지니스로직 입력항목 검증 - lectureValidator 호출 / 입력 항목 계산하여 에러 검증
-        lectureValidator.validate(lectureReqDto,errors);
-        if(errors.hasErrors()) {
+        lectureValidator.validate(lectureReqDto, errors);
+        if (errors.hasErrors()) {
             return getErrors(errors);
         }
 
@@ -61,7 +61,7 @@ public class LectureController {
 
         // free, offline 값 업데이트
         lecture.update();
-        
+
         // 테이블에 Insert
         Lecture addedLecture = this.lectureRepository.save(lecture);
 
@@ -126,21 +126,50 @@ public class LectureController {
 
     @GetMapping("/{id}")
     public ResponseEntity getLecture(@PathVariable Integer id) {
-        Optional<Lecture> optionalLecture = this.lectureRepository.findById(id);    // Optional 은 반환받은 데이터의 null 체크를 수동으로 하지 않아도됨
-
+        Lecture lecture = getLectureExistOrElseThrow(id);
 //        if(optionalLecture.isEmpty()) {
 ////            return ResponseEntity.notFound().build();
 //            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("강의가 없습니다.");
 //        }
 //        Lecture lecture = optionalLecture.get();
 
-        String errMsg = String.format("Id = %d 강의가 없습니다.",id);
-        // 위에 네줄 생략 - Optional 의 저장된 객체가 null 이면 오류 반환 null 이 아니면 객체 반환
-        Lecture lecture = optionalLecture.orElseThrow(()->new BusinessException(errMsg, HttpStatus.NOT_FOUND));
+
 
         LectureResDto lectureResDto = modelMapper.map(lecture, LectureResDto.class);
         LectureResource lectureResource = new LectureResource(lectureResDto);
         return ResponseEntity.ok(lectureResource);
     }
 
+    private Lecture getLectureExistOrElseThrow(Integer id) {
+        Optional<Lecture> optionalLecture = this.lectureRepository.findById(id);    // Optional 은 반환받은 데이터의 null 체크를 수동으로 하지 않아도됨
+
+        String errMsg = String.format("Id = %d 강의가 없습니다.", id);
+        // 아래 네줄 생략 - Optional 의 저장된 객체가 null 이면 오류 반환 null 이 아니면 객체 반환
+        Lecture lecture = optionalLecture.orElseThrow(() -> new BusinessException(errMsg, HttpStatus.NOT_FOUND));
+        return lecture;
+    }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity updateLecture(@PathVariable Integer id, @RequestBody @Valid LectureReqDto lectureReqDto, Errors errors) {
+        Lecture existingLecture  = getLectureExistOrElseThrow(id); //아래 세줄 생략
+//        Optional<Lecture> optionalLecture = lectureRepository.findById(id);
+//        String errMsg = String.format("Id = %d Lecture Not Found", id);
+//        optionalLecture.orElseThrow(() -> new BusinessException(errMsg, HttpStatus.NOT_FOUND));
+        if (errors.hasErrors()) {
+            return getErrors(errors);
+        }
+        this.lectureValidator.validate(lectureReqDto, errors);
+        if (errors.hasErrors()) {
+            return getErrors(errors);
+        }
+//        Lecture existingLecture = optionalLecture.get();
+        this.modelMapper.map(lectureReqDto, existingLecture);
+        existingLecture.update();
+        Lecture savedLecture = this.lectureRepository.save(existingLecture);
+
+        //Entity => ResDto 매핑
+        LectureResDto lectureResDto = modelMapper.map(savedLecture, LectureResDto.class);
+        return ResponseEntity.ok(new LectureResource(lectureResDto));
+    }
 }
