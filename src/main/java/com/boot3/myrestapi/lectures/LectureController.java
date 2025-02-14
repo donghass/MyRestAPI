@@ -5,6 +5,8 @@ import com.boot3.myrestapi.common.exception.BusinessException;
 import com.boot3.myrestapi.lectures.dto.LectureReqDto;
 import com.boot3.myrestapi.lectures.dto.LectureResDto;
 import com.boot3.myrestapi.lectures.dto.LectureResource;
+import com.boot3.myrestapi.security.userInfo.CurrentUser;
+import com.boot3.myrestapi.security.userInfo.UserInfo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -45,7 +47,7 @@ public class LectureController {
      Errors - 입력 항목 에러 정보를 저장하거나 조회해주는 역할
      */
     @PostMapping
-    public ResponseEntity<?> createLecture(@RequestBody @Valid LectureReqDto lectureReqDto, Errors errors) {
+    public ResponseEntity<?> createLecture(@RequestBody @Valid LectureReqDto lectureReqDto, Errors errors, @CurrentUser UserInfo currentUser) {
         // 입력항목 검증시 에러 발생 확인 에러 나면 종료   // 입력 항목 값 에러 검증(어노테이션 확인)
         if (errors.hasErrors()) {
             return getErrors(errors);
@@ -62,6 +64,9 @@ public class LectureController {
 
         // free, offline 값 업데이트
         lecture.update();
+
+        // lecture 를 등록한 유저 , Lecture 와 UserInfo 의 관계 저장
+        lecture.setUserInfo(currentUser);
 
         // 테이블에 Insert
         Lecture addedLecture = this.lectureRepository.save(lecture);
@@ -114,15 +119,22 @@ public class LectureController {
      */
     @GetMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')") // ADMIN Role 를 가진 사용자만 접근 권한이 있음
-    public ResponseEntity queryLectures(Pageable pageable, PagedResourcesAssembler<LectureResDto> assembler) {
+    public ResponseEntity queryLectures(Pageable pageable, PagedResourcesAssembler<LectureResDto> assembler, @CurrentUser UserInfo currentUser) {
         Page<Lecture> lecturePage = this.lectureRepository.findAll(pageable);
+
         //page<Lecture> -> page<LectureResDto> 로 변환
         Page<LectureResDto> lectureResDtoPage = lecturePage.map(lecture -> modelMapper.map(lecture, LectureResDto.class));
+
         // page<LectureResDto> -> HATEOAS PagedModel 로 변환
 //        PagedModel<EntityModel<LectureResDto>> pagedResources = assembler.toModel(lectureResDtoPage);
         // RepresentationModelAssembler 의 D toModel(T entity)
 //      assembler.toModel(lectureResDtoPage,resDto ->new LectureResource(resDto));
         PagedModel<LectureResource> pagedModel = assembler.toModel(lectureResDtoPage, LectureResource::new);
+
+        // 사용자 정보가 null 이 아니면 링크 추가
+        if (currentUser != null) {
+            pagedModel.add(linkTo(LectureController.class).withRel("create-Lecture"));
+        }
         return ResponseEntity.ok(pagedModel);
     }
 

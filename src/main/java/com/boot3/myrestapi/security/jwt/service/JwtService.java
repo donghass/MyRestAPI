@@ -26,6 +26,7 @@ public class JwtService {
     private final static SecureDigestAlgorithm<SecretKey, SecretKey> ALGORITHM = Jwts.SIG.HS256;
     public static final int ACCESS_EXPIRE = 3600;
 
+    // JWT 토큰에 저장된 정보를 추출
     private Claims extractAllClaims(String token) {
         return Jwts
                 .parser()
@@ -40,6 +41,7 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
+    // payload 의 "sub":"user@aa.com", subject 에 매핑된 값 주소 반환
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -53,10 +55,12 @@ public class JwtService {
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
+        // 토큰에 포함된 username(이메일) 추출
         final String username = extractUsername(token);
+//        token 과 Entity(테이블)에 있는 username 가 같으면 true
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
-
+    // 토큰 검증
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
@@ -70,17 +74,17 @@ public class JwtService {
                     ex.fillInStackTrace());
         }
     }
-
+    // JWT 토큰 생성
     public String generateToken(String userName){
         // ACCESS_EXPIRE 3600초 => 60분
         Date exprireDate = Date.from(Instant.now().plusSeconds(ACCESS_EXPIRE));
 
-        return Jwts.builder()
-                .signWith(KEY, ALGORITHM)
-                .subject(userName)
-                .issuedAt(new Date())
-                .expiration(exprireDate)
-                .compact();
+        return Jwts.builder()               // JWT 빌더 인스턴스 생성
+                .signWith(KEY, ALGORITHM)   // 시크릿키와 암호화 알고리즘
+                .subject(userName)          // payload 내부의 subject (유저)
+                .issuedAt(new Date())       //   내부의 발급시간
+                .expiration(exprireDate)    // 토큰 유효시간
+                .compact();                 // 위 내용으로 만든 토큰값
     }
 
 }
