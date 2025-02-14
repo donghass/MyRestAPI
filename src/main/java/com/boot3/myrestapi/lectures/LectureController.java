@@ -1,6 +1,8 @@
 package com.boot3.myrestapi.lectures;
 
 import com.boot3.myrestapi.lectures.dto.LectureReqDto;
+import com.boot3.myrestapi.lectures.dto.LectureResDto;
+import com.boot3.myrestapi.lectures.dto.LectureResource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.Optional;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 @RestController
 @RequestMapping(value="/api/lectures", produces = MediaTypes.HAL_JSON_VALUE)
@@ -46,18 +50,33 @@ public class LectureController {
 
         // ReqDTO => Entity 매핑
         Lecture lecture = modelMapper.map(lectureReqDto, Lecture.class);
+
         // free, offline 값 업데이트
         lecture.update();
         
         // 테이블에 Insert
         Lecture addedLecture = this.lectureRepository.save(lecture);
+
+        // Entity 를 ResDTO로 변환
+        LectureResDto lectureResDto = modelMapper.map(addedLecture, LectureResDto.class);
+
         // Hateoas Link 생성을 담당하는 객체 http://localhost:8080/api/lectures/10   //getId = 위에 setId해준 10으로 requestMapping 의 /api/lectures/10
-        WebMvcLinkBuilder selfLinkBuilder = WebMvcLinkBuilder.linkTo(LectureController.class).slash(addedLecture.getId());
+        WebMvcLinkBuilder selfLinkBuilder = linkTo(LectureController.class).slash(lectureResDto.getId());
+
         //생성한 링크를 uri 형식으로 생성해준다
         URI createUri = selfLinkBuilder.toUri();
+
+
+        LectureResource lectureResource = new LectureResource(lectureResDto);
+        lectureResource.add(linkTo(LectureController.class).withRel("query-lectures")); // query-lectures 라는 이름을 갖는 링크 생성
+        // self Link 생성
+        lectureResource.add(selfLinkBuilder.withSelfRel());
+        lectureResource.add(selfLinkBuilder.withRel("update-lecture"));
+
+
         // ResponseEntitiy = body + header + statusCode(ex. 200, 404 등등)
         // created() : statuscode 를 201로 설정하고, 위에서 생성한 링크를 response loacation 해더로 설정한다
-        return ResponseEntity.created(createUri).body(lecture);
+        return ResponseEntity.created(createUri).body(lectureResource);
     }
 
     private static ResponseEntity<Errors> getErrors(Errors errors) {
