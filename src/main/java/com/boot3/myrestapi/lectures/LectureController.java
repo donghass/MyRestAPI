@@ -1,12 +1,18 @@
 package com.boot3.myrestapi.lectures;
 
+import com.boot3.myrestapi.common.ErrorsResource;
 import com.boot3.myrestapi.lectures.dto.LectureReqDto;
 import com.boot3.myrestapi.lectures.dto.LectureResDto;
 import com.boot3.myrestapi.lectures.dto.LectureResource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
@@ -70,7 +76,7 @@ public class LectureController {
         LectureResource lectureResource = new LectureResource(lectureResDto);
         lectureResource.add(linkTo(LectureController.class).withRel("query-lectures")); // query-lectures 라는 이름을 갖는 링크 생성
         // self Link 생성
-        lectureResource.add(selfLinkBuilder.withSelfRel());
+//        lectureResource.add(selfLinkBuilder.withSelfRel());
         lectureResource.add(selfLinkBuilder.withRel("update-lecture"));
 
 
@@ -79,8 +85,8 @@ public class LectureController {
         return ResponseEntity.created(createUri).body(lectureResource);
     }
 
-    private static ResponseEntity<Errors> getErrors(Errors errors) {
-        return ResponseEntity.badRequest().body(errors);
+    private static ResponseEntity<ErrorsResource> getErrors(Errors errors) {
+        return ResponseEntity.badRequest().body(new ErrorsResource(errors));
     }
 
     @DeleteMapping("/{id}")
@@ -100,4 +106,14 @@ public class LectureController {
         return ResponseEntity.ok("삭제를 성공했습니다.");
     }
 
+    /*
+        HATEOAS PagedResourcesAssembler 는 (page 는 paging data 를) -> (pagedModel 는 paging data + Link) 로 변환
+     */
+    @GetMapping
+    public ResponseEntity queryLectures(Pageable pageable, PagedResourcesAssembler<LectureResDto> assembler) {
+        Page<Lecture> lecturePage = this.lectureRepository.findAll(pageable);
+        Page<LectureResDto> lectureResDtoPage = lecturePage.map(lecture -> modelMapper.map(lecture, LectureResDto.class));
+        PagedModel<EntityModel<LectureResDto>> pagedResources = assembler.toModel(lectureResDtoPage);
+        return ResponseEntity.ok(pagedResources);
+    }
 }
