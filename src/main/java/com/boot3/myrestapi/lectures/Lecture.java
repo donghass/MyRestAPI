@@ -38,7 +38,7 @@ public class Lecture {
     private LectureStatus lectureStatus = LectureStatus.DRAFT;
 
     public void update() {
-// Update free
+// Update free test
 //        if (this.basePrice == 0 && this.maxPrice == 0) {
 //            this.free = true;
 //        } else {
