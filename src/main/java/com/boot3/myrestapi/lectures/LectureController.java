@@ -112,8 +112,13 @@ public class LectureController {
     @GetMapping
     public ResponseEntity queryLectures(Pageable pageable, PagedResourcesAssembler<LectureResDto> assembler) {
         Page<Lecture> lecturePage = this.lectureRepository.findAll(pageable);
+        //page<Lecture> -> page<LectureResDto> 로 변환
         Page<LectureResDto> lectureResDtoPage = lecturePage.map(lecture -> modelMapper.map(lecture, LectureResDto.class));
-        PagedModel<EntityModel<LectureResDto>> pagedResources = assembler.toModel(lectureResDtoPage);
-        return ResponseEntity.ok(pagedResources);
+        // page<LectureResDto> -> HATEOAS PagedModel 로 변환
+//        PagedModel<EntityModel<LectureResDto>> pagedResources = assembler.toModel(lectureResDtoPage);
+        // RepresentationModelAssembler 의 D toModel(T entity)
+//      assembler.toModel(lectureResDtoPage,resDto ->new LectureResource(resDto));
+        PagedModel<LectureResource> pagedModel = assembler.toModel(lectureResDtoPage, LectureResource::new);
+        return ResponseEntity.ok(pagedModel);
     }
 }
