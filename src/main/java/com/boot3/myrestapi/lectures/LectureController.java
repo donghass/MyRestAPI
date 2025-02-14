@@ -17,6 +17,7 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
@@ -112,6 +113,7 @@ public class LectureController {
         HATEOAS PagedResourcesAssembler 는 (page 는 paging data 를) -> (pagedModel 는 paging data + Link) 로 변환
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // ADMIN Role 를 가진 사용자만 접근 권한이 있음
     public ResponseEntity queryLectures(Pageable pageable, PagedResourcesAssembler<LectureResDto> assembler) {
         Page<Lecture> lecturePage = this.lectureRepository.findAll(pageable);
         //page<Lecture> -> page<LectureResDto> 로 변환
@@ -125,6 +127,7 @@ public class LectureController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_USER')")      // USER Role 를 가진 사용자만 조회 가능
     public ResponseEntity getLecture(@PathVariable Integer id) {
         Lecture lecture = getLectureExistOrElseThrow(id);
 //        if(optionalLecture.isEmpty()) {
