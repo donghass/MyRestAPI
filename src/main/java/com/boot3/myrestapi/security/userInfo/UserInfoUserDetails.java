@@ -9,6 +9,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/*
+    AuthenticationManager 가 인즏 처리를 할 때 getUsername() 와 getPassword() 사용
+    Entity(테이블) 에 저장된 username 와 password 를 가져와서 저장
+ */
 public class UserInfoUserDetails implements UserDetails {
 
     private String email;
@@ -20,8 +24,11 @@ public class UserInfoUserDetails implements UserDetails {
         this.userInfo = userInfo;
         this.email=userInfo.getEmail();
         this.password=userInfo.getPassword();
-        this.authorities= Arrays.stream(userInfo.getRoles().split(","))
-                .map(SimpleGrantedAuthority::new)
+        this.authorities= Arrays.stream(userInfo.getRoles().split(",")) // 리턴 타입이 Stream<string>
+//                Stream<string> => Stream<SimpleGrantedAuthority>
+                .map(roleName-> new SimpleGrantedAuthority(roleName))   // 함수형 인터페이스 function
+//                .map(SimpleGrantedAuthority::new)
+//                Stream<SimpleGrantedAuthority> => List<SimpleGrantedAuthority> 해주는게 collect
                 .collect(Collectors.toList());
     }
 

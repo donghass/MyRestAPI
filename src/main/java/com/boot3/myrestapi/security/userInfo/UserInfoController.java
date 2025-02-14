@@ -1,15 +1,28 @@
 package com.boot3.myrestapi.security.userInfo;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
 public class UserInfoController {
-
+    @Autowired
+    private UserInfoRepository repository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping("/welcome")
     public String welcome() {
         return "환영합니다.";
     }
+
+    @PostMapping("/new")
+    public String addNewUser(@RequestBody UserInfo userInfo){
+        userInfo.setPassword(passwordEncoder.encode(userInfo.getPassword()));   // password 인코딩 해서 저장
+        UserInfo savedUserInfo = repository.save(userInfo);
+        return savedUserInfo.getName() + " user added!!";
+    }
+
 }
